@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    </head>
+    <body>
+    </body>
+
+    <div id="app" class="container">
+
+        <div class="row">
+            <div class="col-12">
+
+                <h3>Text to copy</h3>
+                <p v-if="well_written">
+                    <strong style="color:#0f0">
+                    {{ written_text }}
+                    </strong>
+                    {{ text_to_write }}
+                </p>
+                <p v-else>
+                    <strong style="color:#f00">
+                    {{ written_text }}
+                    </strong>
+                    {{ text_to_write }}
+                </p>
+                
+                <h3>Copied text</h3>
+                <div class="form-group row">
+                    <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" v-model="input" @input="refresh"></textarea>
+                </div>
+                <div><strong>Progress bar :</strong></div>
+                <div class="progress">
+                <div class="progress-bar progress-bar-striped"
+                     role="progressbar" v-bind:style="{width: width_value}" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100">{{ width_value }}</div>
+                </div>
+
+                <div><strong>Accuracy :</strong></div>
+                <div class="progress">
+                <div class="progress-bar progress-bar-striped"
+                     role="progressbar" v-bind:style="{width: acc}" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100">{{ acc }}</div>
+                </div>
+
+                <br>
+                <div><strong>Words Per Minute :</strong>&nbsp {{ wpm }}</div>
+                <div><strong>Accuracy :</strong>&nbsp {{ acc }}</div>
+                <br>
+
+                <button class="btn btn-primary mb-2" @click="reset()">New test</button>
+            </div>
+        </div>
+    </div>
+    
+
+    
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="node_modules/chance/dist/chance.min.js"></script>
+
+
+
+    <script>
+    var app = new Vue({
+        el: '#app',
+        data: {
+            well_written: true,
+            text: 'This is the text to copy',
+            written_text: '',
+            text_to_write: 'This is the text to copy',
+            input: '',
+            current_size: 0,
+            start_time: 0,
+
+            wpm: '',
+
+            nb_keystroke: 0,
+            nb_right_key_stroked: 0,
+            acc: '',
+
+            width_value: '0%'
+        },
+        methods: {
+            refresh: function() {
+                // Initialise
+                if (this.start_time === 0) {
+                    this.start_time = Date.now();
+                }
+                
+                // Compute text
+                var input_size = this.input.length;
+                this.written_text = this.text.substr(0, input_size);
+                this.text_to_write = this.text.substr(input_size, this.text.length);
+                this.well_written = (this.input === this.written_text);
+
+                // Compute wpm
+                this.wpm = Math.floor(100000*60*this.input.length/(5 * (Date.now() - this.start_time)))/100;
+
+                // Compute acccuracy
+                if (input_size > this.current_size) {
+                    this.nb_keystroke++
+                    if (this.well_written){
+                        this.nb_right_key_stroked++
+                    }
+                }
+
+                // Compute accuracy
+                this.acc = Math.floor(100 * this.nb_right_key_stroked/this.nb_keystroke) + "%";
+
+                // Compute progress bar
+                this.width_value=Math.floor(this.input.length/this.text.length * 100) + "%";
+                if (this.text === this.input) {
+                    this.reset();
+                }
+                // Update current size
+                this.current_size = input_size;
+            },
+
+            reset: function() {
+                var paragraph = chance.paragraph({sentences: 2});
+                this.text = paragraph;
+                this.text_to_write = paragraph;
+                this.written_text = '';
+
+
+                this.input='';
+                this.current_size=0;
+                this.start_time=0;
+                this.nb_keystroke=0;
+                this.nb_right_key_stroked=0;
+                this.width_value= "0%";
+            }
+
+        },
+        mounted: function() {
+            this.reset();
+        }
+    })
+
+    </script>
+</html>
